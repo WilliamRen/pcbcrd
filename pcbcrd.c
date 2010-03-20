@@ -43,6 +43,7 @@
 
 const char* program_name;
 int nofork_flag = 0; /* 1 == run in foreground */
+int enter_flag = 0;  /* 1 == press enter after codebare typing */
 char *host, *port;
 
 void usage(void);
@@ -55,13 +56,14 @@ int
 main(int argc, char *argv[])
 {
     int next_option;
-    const char *short_options = "hfH:p:";
+    const char *short_options = "hfH:p:e";
     static const struct option long_options[]=
     {
-	{"help", no_argument, NULL, 'h'},
+	{"help", no_argument,       NULL, 'h'},
 	{"host", required_argument, NULL, 'H'},
 	{"port", required_argument, NULL, 'p'},
 	{"foreground", no_argument, NULL, 'f'},
+	{"enter", no_argument,	    NULL, 'e'},
 	{NULL, 0, NULL, 0} /* end of array */
     };
 
@@ -83,6 +85,9 @@ main(int argc, char *argv[])
 		break;
 	    case 'f':
 		nofork_flag++;
+		break;
+	    case 'e':
+		enter_flag++;
 		break;
 	    default:
 		/* do nothing */
@@ -281,6 +286,13 @@ type_barecode(char *barecode)
     err = xdo_type(xdo, window, barecode, delay);
     if (err)
 	fprintf(stderr, "xdo_type reported an error\n");
+
+    if (enter_flag)
+    {
+	int err = xdo_keysequence(xdo, window, "Return");
+	if (err)
+	    fprintf(stderr, "xdo_keysequence reported an error\n");
+    }
 
     xdo_free(xdo);
 }
