@@ -54,7 +54,7 @@ void type_barecode(char *barecode);
 int
 main(int argc, char *argv[])
 {
-    int next_option;
+    int c;
     const char *short_options = "hfH:p:e";
     static const struct option long_options[]=
     {
@@ -66,33 +66,27 @@ main(int argc, char *argv[])
 	{NULL, 0, NULL, 0} /* end of array */
     };
 
-    do
-    {
-	next_option = getopt_long(argc, argv, short_options, long_options, NULL);
-
-	switch (next_option)
-	{
-	    case 'h':
-		usage();
-		break;
-	    case 'H':
-		host = strdup(optarg);
-		break;
-	    case 'p':
-		port = strdup(optarg);
-		break;
-	    case 'f':
-		nofork_flag++;
-		break;
-	    case 'e':
-		enter_flag++;
-		break;
-	    default:
-		/* do nothing */
-		break;
-	}
-    }
-    while(next_option != -1);
+    while ((c = getopt_long(argc, argv, short_options, long_options, NULL)) != -1)
+    	switch ((char)c) {
+    	case 'h':
+	    	usage();
+	    	break;
+    	case 'H':
+	    	host = strdup(optarg);
+	    	break;
+    	case 'p':
+	    	port = strdup(optarg);
+	    	break;
+    	case 'f':
+	    	nofork_flag++;
+	    	break;
+    	case 'e':
+	    	enter_flag++;
+	    	break;
+    	default:
+	    	/* do nothing */
+	    	break;
+    	}
 
     if (!nofork_flag) {
 	if (fork())
@@ -127,11 +121,11 @@ usage(void)
 {
     extern const char *__progname;
     printf("usage: %s [-hHpf]\n", __progname);
-    printf("\t-h --help\t\tDisplay help\n");
-    printf("\t-H --host [host]\tHost to listen to\n");
-    printf("\t-p --port [port]\tPort to listen to\n");
-    printf("\t-f --foreground\t\tRun in foreground\n");
-    printf("\t-e --enter\t\tPress enter after typing\n");
+    printf("\t-h --help           Display help\n");
+    printf("\t-H --host [host]    Host to listen to\n");
+    printf("\t-p --port [port]    Port to listen to\n");
+    printf("\t-f --foreground     Run in foreground\n");
+    printf("\t-e --enter          Press enter after typing\n");
 
     exit (-1);
 }
@@ -247,10 +241,8 @@ get_barecode(void *arg)
 
     char buffer[MAXLEN];
     int n = recv(fd, buffer, MAXLEN, 0);
-    buffer[strlen(buffer) -1]='\0';
-    if (n == -1)
-	goto error0;
-    if (n == 0)
+    buffer[strlen(buffer) -1] = '\0';
+    if (n == -1 || n == 0)
 	goto error0;
 
     if (nofork_flag)
