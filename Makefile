@@ -18,7 +18,7 @@ else
 endif
 
 LINKS=-lpthread -lxdo
-CFLAGS+= ${S_CFLAGS} -g -ggdb3 -fno-inline
+CFLAGS+= ${S_CFLAGS} -std=c99 -g -ggdb3 -fno-inline
 LDFLAGS+= ${S_LDFLAGS} $(LINKS)
 
 .PHONY: all clean
