@@ -41,7 +41,6 @@
 #include	<limits.h>
 #define	MAXLEN	LINE_MAX
 
-const char* program_name;
 int nofork_flag = 0; /* 1 == run in foreground */
 int enter_flag = 0;  /* 1 == press enter after codebare typing */
 char *host, *port;
@@ -67,7 +66,6 @@ main(int argc, char *argv[])
 	{NULL, 0, NULL, 0} /* end of array */
     };
 
-    program_name = argv[0];
     do
     {
 	next_option = getopt_long(argc, argv, short_options, long_options, NULL);
@@ -127,7 +125,8 @@ main(int argc, char *argv[])
 void
 usage(void)
 {
-    printf("usage: %s [-hHpf]\n", program_name);
+    extern const char *__progname;
+    printf("usage: %s [-hHpf]\n", __progname);
     printf("\t-h --help\t\tDisplay help\n");
     printf("\t-H --host [host]\tHost to listen to\n");
     printf("\t-p --port [port]\tPort to listen to\n");
