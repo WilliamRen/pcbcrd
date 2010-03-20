@@ -21,6 +21,8 @@
  * Description: Main file of pcbcrd
  */
 
+#include	<err.h>
+#include	<errno.h>
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -98,6 +100,8 @@ main(int argc, char *argv[])
 	    exit(0);
 	FILE *pidfile;
 	pidfile = fopen(PCBRCD_DEFAULT_PIDFILE, "w");
+	if (pidfile == NULL)
+		err(1, "couldn't open %s", PCBRCD_DEFAULT_PIDFILE);
 	fprintf(pidfile, "%i\n", (int)getpid());
 	fclose(pidfile);
 	printf("forked, pid: %i\n", (int)getpid());
