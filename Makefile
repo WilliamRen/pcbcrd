@@ -17,7 +17,7 @@ else
     S_LDFLAGS=-L/usr/lib
 endif
 
-CFLAGS+= ${S_CFLAGS}
+CFLAGS+= ${S_CFLAGS} -g -ggdb3 -fno-inline
 LDFLAGS+= ${S_LDFLAGS}
 
 .PHONY: all clean
