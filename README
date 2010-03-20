@@ -1,0 +1,6 @@
+This is a daemon for PC_BCR (http://code.google.com/p/android-pcbcr/) for Unix-like systems.
+
+This daemon is released under the GNU General Public License.
+
+You need to have Dotool (http://www.semicomplete.com/projects/xdotool/) with header file in order to build and use pcbcr_daemon.
+
