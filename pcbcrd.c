@@ -41,6 +41,11 @@
 #include	<limits.h>
 #define	MAXLEN	LINE_MAX
 
+/* some useful define for default values */
+#define	PCBRCD_DEFAULT_PIDFILE	"/tmp/pcbcrd.pid"
+#define	PCBRCD_DEFAULT_PORT	"13000"
+#define	PCBRCD_DEFAULT_HOST	"localhost"
+
 int nofork_flag = 0; /* 1 == run in foreground */
 int enter_flag = 0;  /* 1 == press enter after codebare typing */
 char *host, *port;
@@ -92,7 +97,7 @@ main(int argc, char *argv[])
 	if (fork())
 	    exit(0);
 	FILE *pidfile;
-	pidfile = fopen("/tmp/pcbcrd.pid", "w+");
+	pidfile = fopen(PCBRCD_DEFAULT_PIDFILE, "w");
 	fprintf(pidfile, "%i\n", (int)getpid());
 	fclose(pidfile);
 	printf("forked, pid: %i\n", (int)getpid());
@@ -136,7 +141,7 @@ sighandle(int signo)
 {
         if ((signo == SIGTERM) || (signo == SIGINT)) {
                 printf("Exiting.\n");
-		unlink("/tmp/pcbcrd.pid");
+		unlink(PCBRCD_DEFAULT_PIDFILE);
                 exit(EXIT_SUCCESS);
         }
 
@@ -161,9 +166,9 @@ run_daemon(void)
 
 
     if (port == NULL)
-	port = "13000";
+	port = PCBRCD_DEFAULT_PORT;
     if (host == NULL)
-	host = "localhost";
+	host = PCBRCD_DEFAULT_HOST;
     printf("Listening on %s:%s\n", host, port);
 
 
