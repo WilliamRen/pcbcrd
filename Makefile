@@ -18,13 +18,13 @@ else
 endif
 
 CFLAGS+= ${S_CFLAGS} -g -ggdb3 -fno-inline
-LDFLAGS+= ${S_LDFLAGS}
+LDFLAGS+= ${S_LDFLAGS} -lpthread
 
 .PHONY: all clean
 
 all:
 	@echo "Found ${OS}"
-	$(CC) $(CFLAGS) pcbcrd.c -o pcbcrd
+	$(CC) $(CFLAGS) -lpthread pcbcrd.c -o pcbcrd
 
 clean:
 	@rm -v pcbcrd
