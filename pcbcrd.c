@@ -97,11 +97,11 @@ main(int argc, char *argv[])
 
     if (!nofork_flag) {
 	if (fork())
-	    exit(0);
+	    exit(EXIT_SUCCESS);
 	FILE *pidfile;
 	pidfile = fopen(PCBRCD_DEFAULT_PIDFILE, "w");
 	if (pidfile == NULL)
-		err(1, "couldn't open %s", PCBRCD_DEFAULT_PIDFILE);
+		err(EXIT_FAILURE, "couldn't open %s", PCBRCD_DEFAULT_PIDFILE);
 	fprintf(pidfile, "%i\n", (int)getpid());
 	fclose(pidfile);
 	printf("forked, pid: %i\n", (int)getpid());
@@ -136,7 +136,7 @@ usage(void)
     printf("\t-f --foreground     Run in foreground\n");
     printf("\t-e --enter          Press enter after typing\n");
 
-    exit (-1);
+    exit(EXIT_FAILURE);
 }
 
 
@@ -163,7 +163,7 @@ run_daemon(void)
     int clt_fd, srv_fd;
     struct sockaddr_in clt_addr;
     socklen_t sin_size;
-    int yes = 1, err;
+    int yes = 1, eno;
     pthread_t tid;
     struct  timeval sock_timeout = {5, 0};
     struct  linger lng = {1, 5};
@@ -184,30 +184,21 @@ run_daemon(void)
 
     hint.ai_flags |= AI_CANONNAME;
 
-    int tmp;
-    if (tmp = getaddrinfo(host, port, &hint, &res))
-    {
-	fprintf(stderr, "getaddrinfo : %s\n", gai_strerror(tmp));
-    	exit(-1);
-    }
+	int i = getaddrinfo(host, port, &hint, &res);
+	if (i != 0)
+		errx(EXIT_FAILURE, "getaddrinfo : %s", gai_strerror(i));
 
-    if ((srv_fd = socket(res->ai_family,
-		    res->ai_socktype,
-		    res->ai_protocol)) == -1)
-    {
-	fprintf(stderr, "socket error\n");
-	exit(-1);
-    }
+	srv_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (srv_fd == -1)
+		err(EXIT_FAILURE, "socket");
 
     struct sockaddr_storage srv_addr;
     memcpy(&srv_addr, res->ai_addr, res->ai_addrlen);
 
-    if (setsockopt(srv_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
-    {
-	fprintf(stderr, "setsockopt failed\n");
-	exit(-1);
-    }
+	if (setsockopt(srv_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+		err(EXIT_FAILURE, "setsockopt");
 
+	/* XXX: ignore return values? */
     setsockopt(srv_fd, SOL_SOCKET, SO_RCVTIMEO,
 	    &sock_timeout, sizeof(struct timeval));
     setsockopt(srv_fd, SOL_SOCKET, SO_SNDTIMEO,
@@ -215,17 +206,11 @@ run_daemon(void)
     setsockopt(srv_fd, SOL_SOCKET, SO_LINGER,
 	    &lng, sizeof(struct linger));
 
-    if (bind(srv_fd, (struct sockaddr *)&srv_addr, res->ai_addrlen) == -1)
-    {
-	fprintf(stderr, "bind failed\n");
-	exit(-1);
-    }
+	if (bind(srv_fd, (struct sockaddr *)&srv_addr, res->ai_addrlen) == -1)
+		err(EXIT_FAILURE, "bind");
 
-    if (listen(srv_fd, 5) < 0)
-    {
-	fprintf(stderr, "listen error\n");
-	exit(-1);
-    }
+	if (listen(srv_fd, 5) == -1)
+		err(EXIT_FAILURE, "listen");
 
     while(1) {
 	sin_size = sizeof(struct sockaddr_in);
@@ -235,9 +220,9 @@ run_daemon(void)
 	    continue;
 	}
 
-	err = pthread_create(&tid, NULL, get_barecode, (void *)clt_fd);
-	if (err != 0)
-	    fprintf(stderr, "error creating thread, err: %d\n", err);
+	eno = pthread_create(&tid, NULL, get_barecode, (void *)clt_fd);
+	if (eno != 0)
+	    fprintf(stderr, "error creating thread: %d\n", eno);
     }
 	/* NEVER REACHED */
 }
@@ -259,12 +244,11 @@ get_barecode(void *arg)
     (void)type_barecode(buffer);
 
     char *ack = "ack\n";
-    int senderr = send(fd, ack, strlen(ack), 0);
-    if (senderr < 0)
-    {
-	fprintf(stderr, "send() error\n");
-	exit(-1);
-    }
+	if (send(fd, ack, strlen(ack), 0) == -1) {
+		/* FIXME: should be syslog'd or ignored if we forked
+		 	(!nofork_flag) */
+		err(EXIT_FAILURE, "send");
+	}
 
 error0:
     close(fd);
@@ -274,27 +258,22 @@ error0:
 void
 type_barecode(char *barecode)
 {
-    int err;
-    Window window = 0;
-    useconds_t delay = 12000; /* 12ms between keystrokes default */
-    xdo_t *xdo;
-    xdo = xdo_new(getenv("DISPLAY"));
-    if (xdo == NULL)
-    {
-	fprintf(stderr, "Failed creating new xdo instance\n");
-	exit(-1);
-    }
+	Window window = 0;
+	useconds_t delay = 12000; /* 12ms between keystrokes default */
+	xdo_t *xdo;
 
-    err = xdo_type(xdo, window, barecode, delay);
-    if (err)
-	fprintf(stderr, "xdo_type reported an error\n");
+    	/* XXX: check DISPLAY? */
+	if ((xdo = xdo_new(getenv("DISPLAY"))) == NULL)
+		errx(EXIT_FAILURE, "Failed creating new xdo instance");
 
-    if (enter_flag)
-    {
-	int err = xdo_keysequence(xdo, window, "Return");
-	if (err)
-	    fprintf(stderr, "xdo_keysequence reported an error\n");
-    }
+	if (xdo_type(xdo, window, barecode, delay) != 0) {
+		fprintf(stderr, "xdo_type reported an error\n");
+		/* XXX: return here? */
+	}
 
-    xdo_free(xdo);
+	if (enter_flag) {
+		if (xdo_keysequence(xdo, window, "Return") != 0)
+			fprintf(stderr, "xdo_keysequence reported an error\n");
+	}
+	xdo_free(xdo);
 }
