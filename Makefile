@@ -17,14 +17,15 @@ else
     S_LDFLAGS=-L/usr/lib
 endif
 
+LINKS=-lpthread -lxdo
 CFLAGS+= ${S_CFLAGS} -g -ggdb3 -fno-inline
-LDFLAGS+= ${S_LDFLAGS} -lpthread
+LDFLAGS+= ${S_LDFLAGS} $(LINKS)
 
 .PHONY: all clean
 
 all:
 	@echo "Found ${OS}"
-	$(CC) $(CFLAGS) -lpthread pcbcrd.c -o pcbcrd
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LINKS) pcbcrd.c -o pcbcrd
 
 clean:
 	@rm -v pcbcrd

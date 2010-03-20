@@ -48,7 +48,8 @@ char *host, *port;
 void usage(void);
 void run_daemon(void);
 void sighandle(int signo);
-void * type_barecode(void *arg);
+void * get_barecode(void *arg);
+void type_barecode(char *barecode);
 
 int
 main(int argc, char *argv[])
@@ -101,15 +102,15 @@ main(int argc, char *argv[])
     }
     /* ignore SIGPIPE and catch SIGTERM|INT */
     if (signal(SIGPIPE, sighandle) == SIG_ERR)
-            fprintf(stderr, "can't catch SIGPIPE signal");
+            fprintf(stderr, "can't catch SIGPIPE signal\n");
     if (signal(SIGTERM, sighandle) == SIG_ERR)
-            fprintf(stderr, "can't catch SIGTERM signal");
+            fprintf(stderr, "can't catch SIGTERM signal\n");
     if (signal(SIGINT, sighandle) == SIG_ERR)
-            fprintf(stderr, "can't catch SIGINT signal");
+            fprintf(stderr, "can't catch SIGINT signal\n");
     if (signal(SIGALRM, sighandle) == SIG_ERR)
-            fprintf(stderr, "can't catch SIGALRM signal");
+            fprintf(stderr, "can't catch SIGALRM signal\n");
     if (signal(SIGHUP, sighandle) == SIG_ERR)
-            fprintf(stderr, "can't catch SIGHUP signal");
+            fprintf(stderr, "can't catch SIGHUP signal\n");
 
 
     (void)run_daemon();
@@ -178,7 +179,7 @@ run_daemon(void)
     int tmp;
     if (tmp = getaddrinfo(host, port, &hint, &res))
     {
-	fprintf(stderr, "getaddrinfo : %s", gai_strerror(tmp));
+	fprintf(stderr, "getaddrinfo : %s\n", gai_strerror(tmp));
     	exit(-1);
     }
 
@@ -186,7 +187,7 @@ run_daemon(void)
 		    res->ai_socktype,
 		    res->ai_protocol)) == -1)
     {
-	fprintf(stderr, "socket error");
+	fprintf(stderr, "socket error\n");
 	exit(-1);
     }
 
@@ -195,7 +196,7 @@ run_daemon(void)
 
     if (setsockopt(srv_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
     {
-	fprintf(stderr, "setsockopt failed");
+	fprintf(stderr, "setsockopt failed\n");
 	exit(-1);
     }
 
@@ -208,13 +209,13 @@ run_daemon(void)
 
     if (bind(srv_fd, (struct sockaddr *)&srv_addr, res->ai_addrlen) == -1)
     {
-	fprintf(stderr, "bind failed");
+	fprintf(stderr, "bind failed\n");
 	exit(-1);
     }
 
     if (listen(srv_fd, 5) < 0)
     {
-	fprintf(stderr, "listen error");
+	fprintf(stderr, "listen error\n");
 	exit(-1);
     }
 
@@ -226,15 +227,15 @@ run_daemon(void)
 	    continue;
 	}
 
-	err = pthread_create(&tid, NULL, type_barecode, (void *)clt_fd);
+	err = pthread_create(&tid, NULL, get_barecode, (void *)clt_fd);
 	if (err != 0)
-	    fprintf(stderr, "error creating thread, err: %d", err);
+	    fprintf(stderr, "error creating thread, err: %d\n", err);
     }
 	/* NEVER REACHED */
 }
 
 void *
-type_barecode(void *arg)
+get_barecode(void *arg)
 {
     int fd = (int)arg;
     pthread_detach(pthread_self());
@@ -247,13 +248,14 @@ type_barecode(void *arg)
     if (n == 0)
 	goto error0;
 
-    fprintf(stderr, "received: %s", buffer);
+    fprintf(stderr, "received: %s\n", buffer);
+    (void)type_barecode(buffer);
 
     char *ack = "ack\n";
     int senderr = send(fd, ack, strlen(ack), 0);
     if (senderr < 0)
     {
-	fprintf(stderr, "send() error");
+	fprintf(stderr, "send() error\n");
 	exit(-1);
     }
 
@@ -262,4 +264,23 @@ error0:
     pthread_exit(NULL);
 }
 
+void
+type_barecode(char *barecode)
+{
+    int err;
+    Window window = 0;
+    useconds_t delay = 12000; /* 12ms between keystrokes default */
+    xdo_t *xdo;
+    xdo = xdo_new(getenv("DISPLAY"));
+    if (xdo == NULL)
+    {
+	fprintf(stderr, "Failed creating new xdo instance\n");
+	exit(-1);
+    }
 
+    err = xdo_type(xdo, window, barecode, delay);
+    if (err)
+	fprintf(stderr, "xdo_type reported an error\n");
+
+    xdo_free(xdo);
+}
