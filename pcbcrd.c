@@ -253,7 +253,8 @@ get_barecode(void *arg)
     if (n == 0)
 	goto error0;
 
-    fprintf(stderr, "received: %s\n", buffer);
+    if (nofork_flag)
+    	fprintf(stderr, "received: %s\n", buffer);
     (void)type_barecode(buffer);
 
     char *ack = "ack\n";
