@@ -132,6 +132,7 @@ usage(void)
     printf("\t-H --host [host]\tHost to listen to\n");
     printf("\t-p --port [port]\tPort to listen to\n");
     printf("\t-f --foreground\t\tRun in foreground\n");
+    printf("\t-e --enter\t\tPress enter after typing\n");
 
     exit (-1);
 }
