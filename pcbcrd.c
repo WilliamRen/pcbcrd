@@ -73,27 +73,27 @@ main(int argc, char *argv[])
 	{NULL, 0, NULL, 0} /* end of array */
     };
 
-    while ((c = getopt_long(argc, argv, short_options, long_options, NULL)) != -1)
-    	switch ((char)c) {
-    	case 'h':
-	    	usage();
-	    	break;
-    	case 'H':
-	    	host = strdup(optarg);
-	    	break;
-    	case 'p':
-	    	port = strdup(optarg);
-	    	break;
-    	case 'f':
-	    	nofork_flag++;
-	    	break;
-    	case 'e':
-	    	enter_flag++;
-	    	break;
-    	default:
-	    	/* do nothing */
-	    	break;
-    	}
+	while ((c = getopt_long(argc, argv, short_options, long_options, NULL)) != -1) {
+		switch ((char)c) {
+		case 'H':
+			host = strdup(optarg);
+			break;
+		case 'p':
+			port = strdup(optarg);
+			break;
+		case 'f':
+			nofork_flag++;
+			break;
+		case 'e':
+			enter_flag++;
+			break;
+		default:  /* FALLTHROUGH */
+		case '?': /* FALLTHROUGH */
+		case 'h':
+			usage();
+			/* NOTREACHED */
+		}
+	}
 
     if (!nofork_flag) {
 	if (fork())
@@ -224,7 +224,7 @@ run_daemon(void)
 	if (eno != 0)
 	    fprintf(stderr, "error creating thread: %d\n", eno);
     }
-	/* NEVER REACHED */
+	/* NOTREACHED */
 }
 
 void *
