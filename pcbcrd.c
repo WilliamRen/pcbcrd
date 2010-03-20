@@ -32,6 +32,7 @@
 
 const char* program_name;
 int nofork_flag = 0; /* 1 == run in foreground */
+char *host, *port;
 
 void usage(void);
 
@@ -42,10 +43,10 @@ main(int argc, char *argv[])
     const char *short_options = "hH:p:f";
     static const struct option long_options[]=
     {
-	{"help", optional_argument, NULL, 'h'},
-	{"host", optional_argument, NULL, 'H'},
-	{"port", optional_argument, NULL, 'p'},
-	{"foreground", optional_argument, NULL, 'f'},
+	{"help", no_argument, NULL, 'h'},
+	{"host", required_argument, NULL, 'H'},
+	{"port", required_argument, NULL, 'p'},
+	{"foreground", no_argument, NULL, 'f'},
 	{NULL, 0, NULL, 0} /* end of array */
     };
 
@@ -60,7 +61,13 @@ main(int argc, char *argv[])
 		usage();
 		break;
 	    case 'H':
-		printf("%s\n", optarg);
+		host = strdup(optarg);
+		break;
+	    case 'p':
+		port = strdup(optarg);
+		break;
+	    case 'f':
+		nofork_flag++;
 		break;
 	    default:
 		/* do nothing */
