@@ -247,7 +247,7 @@ type_barecode(void *arg)
     if (n == 0)
 	goto error0;
 
-    printf("received: %s", buffer);
+    fprintf(stderr, "received: %s", buffer);
 
     char *ack = "ack\n";
     int senderr = send(fd, ack, strlen(ack), 0);
